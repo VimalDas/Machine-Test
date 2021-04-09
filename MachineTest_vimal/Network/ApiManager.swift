@@ -114,11 +114,11 @@ extension ApiManager {
     }
     
     @discardableResult
-    func singleShow(completion: @escaping (Swift.Result<[ShowListModel], AlertModel>) -> Void) -> DataRequest? {
-        let request = call(type: .showList) { (result) in
+    func singleShow(showId: String, completion: @escaping (Swift.Result<ShowListModel, AlertModel>) -> Void) -> DataRequest? {
+        let request = call(type: .singleShow("1")) { (result) in
             switch result {
             case .success(let data):
-                if let showListModel: [ShowListModel] = self.parseApi(data: data) {
+                if let showListModel: ShowListModel = self.parseApi(data: data) {
                     completion(.success(showListModel))
                 } else {
                     completion(.failure(AlertModel(title: "Error", body: "decoding error")))

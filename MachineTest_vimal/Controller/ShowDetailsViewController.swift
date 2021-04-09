@@ -19,18 +19,21 @@ class ShowDetailsViewController: UIViewController {
     @IBOutlet weak var showUrlLabel: UILabel!
     @IBOutlet weak var showRatingLabel: UILabel!
     
+    var showDetails: ShowListModel?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        fetchShowDetails()
     }
     
     func fetchShowDetails() {
-        ApiManager.shared.showList { result in
+        ApiManager.shared.singleShow(showId: "1") { result in
             switch result {
-            case .success(let dataArr):
-                self.shows = dataArr
-                self.collectionView.reloadData()
+            case .success(let details):
+                self.showDetails = details
+                self.updateUI()
+                break
                 
             case .failure(_):
                 break
@@ -39,6 +42,17 @@ class ShowDetailsViewController: UIViewController {
         }
     }
 
+    func updateUI() {
+        showDetailImageView.imageFromUrl(urlString: showDetails?.image.original ?? "")
+        showDescriptionLabel.text = showDetails?.summary
+        showStatusLabel.text = showDetails?.status
+        showDateLabel.text = showDetails?.premiered
+        showRunTimeLabel.text = "\(showDetails?.runtime)"
+        showOfficialSiteLabel.text = showDetails?.officialSite
+        showUrlLabel.text = showDetails?.url
+        showRatingLabel.text = "\(showDetails?.rating.average)"
+    }
+    
     /*
     // MARK: - Navigation
 
