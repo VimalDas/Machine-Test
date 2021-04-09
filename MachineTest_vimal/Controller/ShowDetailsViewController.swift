@@ -25,6 +25,19 @@ class ShowDetailsViewController: UIViewController {
         // Do any additional setup after loading the view.
     }
     
+    func fetchShowDetails() {
+        ApiManager.shared.showList { result in
+            switch result {
+            case .success(let dataArr):
+                self.shows = dataArr
+                self.collectionView.reloadData()
+                
+            case .failure(_):
+                break
+            }
+            
+        }
+    }
 
     /*
     // MARK: - Navigation
