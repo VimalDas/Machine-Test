@@ -17,47 +17,27 @@ class ApiManager: NSObject {
     
     static let shared: ApiManager = ApiManager()
     
-    func call(type: RequestItemsType, params: Parameters? = nil, handler: @escaping (Swift.Result<Data, AlertModel>) -> Void) -> DataRequest? {
-
-        let request = self.sessionManager.request(type.url,
-                                                  method: type.httpMethod,
-                                                  parameters: params,
-                                                  encoding: type.encoding,
-                                                  headers: nil).validate().responseJSON { (responseData) in
-                                                    print("responseData.response:::::",responseData.response as Any)
-                                                    print("Response::::::",responseData.result)
-
-                                                    switch responseData.result {
-
-                                                    case .success(_):
-                                                        if responseData.response != nil &&
-                                                            responseData.value != nil &&
-                                                            (responseData.response?.statusCode == 200) {
-
-                                                            handler(.success(responseData.data!))
-
-                                                        }else{
-                                                            if responseData.response != nil {
-                                                                if let _ = responseData.response?.statusCode {
-                                                                    handler(.failure(AlertModel(title: "Error", body: "No data")))
-                                                                }else {
-                                                                    handler(.failure(AlertModel(title: "Error", body: "No data")))
-                                                                }
-                                                            }
-                                                        }
-                                                        break
-
-                                                    case .failure(_):
-                                                        handler(.failure(AlertModel(title: "Error", body: "No data")))
-                                                        break
-                                                    }
-                                                  }
-        return request
-
-
+    func call<T>(type: RequestItemsType, model: T.Type, handler: @escaping (Swift.Result<T, AlertModel>) -> Void) where T: Codable {
+        self.sessionManager.request(type.url,
+                                    method: type.httpMethod,
+                                    parameters: nil,
+                                    encoding: type.encoding,
+                                    headers: nil).validate().responseJSON { (data) in
+                                        
+                                        guard let jsonData = data.data else {
+                                            handler(.failure(AlertModel(title: "Error", body: "No data")))
+                                            return
+                                        }
+                                        
+                                        if let parseModel: T = self.parseApi(data: jsonData) {
+                                            handler(.success(parseModel))
+                                        } else {
+                                            handler(.failure(AlertModel(title: "Error", body: "decoding error")))
+                                        }
+                                    }
     }
     
-    private func parseApi<T>(data: Data?) -> T? where T: Codable{
+    private func parseApi<T>(data: Data?) -> T? where T: Codable {
         guard let jsonData = data else { print("No data"); return nil }
         let decoder = JSONDecoder()
         do {
@@ -67,69 +47,8 @@ class ApiManager: NSObject {
             print("Error Deconding \n \(error)")
         }
         return nil
+        
+        
     }
     
-}
-
-extension ApiManager {
-    
-    @discardableResult
-    func showList(completion: @escaping (Swift.Result<[ShowListModel], AlertModel>) -> Void) -> DataRequest? {
-        let request = call(type: .showList) { (result) in
-            switch result {
-            case .success(let data):
-                if let showListModel: [ShowListModel] = self.parseApi(data: data) {
-                    completion(.success(showListModel))
-                } else {
-                    completion(.failure(AlertModel(title: "Error", body: "decoding error")))
-                }
-
-                break
-            case .failure(_):
-                completion(.failure(AlertModel(title: "Error", body: "decoding error")))
-                break
-            }
-        }
-        return request
-    }
-    
-    @discardableResult
-    func searchShow(completion: @escaping (Swift.Result<[ShowListModel], AlertModel>) -> Void) -> DataRequest? {
-        let request = call(type: .showList) { (result) in
-            switch result {
-            case .success(let data):
-                if let showListModel: [ShowListModel] = self.parseApi(data: data) {
-                    completion(.success(showListModel))
-                } else {
-                    completion(.failure(AlertModel(title: "Error", body: "decoding error")))
-                }
-
-                break
-            case .failure(_):
-                completion(.failure(AlertModel(title: "Error", body: "decoding error")))
-                break
-            }
-        }
-        return request
-    }
-    
-    @discardableResult
-    func singleShow(showId: String, completion: @escaping (Swift.Result<ShowListModel, AlertModel>) -> Void) -> DataRequest? {
-        let request = call(type: .singleShow("1")) { (result) in
-            switch result {
-            case .success(let data):
-                if let showListModel: ShowListModel = self.parseApi(data: data) {
-                    completion(.success(showListModel))
-                } else {
-                    completion(.failure(AlertModel(title: "Error", body: "decoding error")))
-                }
-
-                break
-            case .failure(_):
-                completion(.failure(AlertModel(title: "Error", body: "decoding error")))
-                break
-            }
-        }
-        return request
-    }
 }

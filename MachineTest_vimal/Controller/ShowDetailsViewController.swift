@@ -18,17 +18,26 @@ class ShowDetailsViewController: UIViewController {
     @IBOutlet weak var showOfficialSiteLabel: UILabel!
     @IBOutlet weak var showUrlLabel: UILabel!
     @IBOutlet weak var showRatingLabel: UILabel!
+    @IBOutlet weak var bgImageView: UIImageView!
+    @IBOutlet weak var collectionView: UICollectionView!
     
     var showDetails: ShowListModel?
+    var showSeasonDetails: [ShowListModel] = []
+    
+    @IBAction func backButtonAction(sender: Any) {
+        
+    }
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        fetchShowDetails()
+        fetchShowDetails(showId: "1")
+        fetchShowSeasonDetails(showId: "1")
     }
     
-    func fetchShowDetails() {
-        ApiManager.shared.singleShow(showId: "1") { result in
+    func fetchShowDetails(showId: String) {
+        ApiManager.shared.call(type: .singleShow(showId), model: ShowListModel.self) { result in
             switch result {
             case .success(let details):
                 self.showDetails = details
@@ -41,16 +50,32 @@ class ShowDetailsViewController: UIViewController {
             
         }
     }
+    
+    func fetchShowSeasonDetails(showId: String) {
+        ApiManager.shared.call(type: .showSeason(showId), model: [ShowListModel].self) { result in
+            switch result {
+            case .success(let details):
+                self.showSeasonDetails = details
+                self.collectionView.reloadData()
+                break
+                
+            case .failure(_):
+                break
+            }
+            
+        }
+    }
 
     func updateUI() {
-        showDetailImageView.imageFromUrl(urlString: showDetails?.image.original ?? "")
+        showDetailImageView.imageFromUrl(urlString: showDetails?.image?.original ?? "")
         showDescriptionLabel.text = showDetails?.summary
         showStatusLabel.text = showDetails?.status
         showDateLabel.text = showDetails?.premiered
-        showRunTimeLabel.text = "\(showDetails?.runtime)"
+        showRunTimeLabel.text = "\(showDetails?.runtime ?? 0)"
         showOfficialSiteLabel.text = showDetails?.officialSite
         showUrlLabel.text = showDetails?.url
-        showRatingLabel.text = "\(showDetails?.rating.average)"
+        showRatingLabel.text = "\(showDetails?.rating?.average ?? 0)"
+        bgImageView.imageFromUrl(urlString: showDetails?.image?.original ?? "")
     }
     
     /*
@@ -67,11 +92,12 @@ class ShowDetailsViewController: UIViewController {
 
 extension ShowDetailsViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 10
+        return showSeasonDetails.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShowListCollectionViewCell.identifier, for: indexPath)
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShowDetailsCollectionViewCell.identifier, for: indexPath) as! ShowDetailsCollectionViewCell
+        cell.showSeasonLabel?.text = "\(indexPath.row + 1)"
         return cell
     }
     

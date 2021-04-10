@@ -9,9 +9,11 @@ import UIKit
 
 class ShowListViewController: UIViewController {
 
+    @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var collectionView: UICollectionView!
     
     var shows: [ShowListModel] = []
+    var filteredResults: [ShowListModel] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -20,7 +22,8 @@ class ShowListViewController: UIViewController {
     }
 
     func showList() {
-        ApiManager.shared.showList { result in
+        ApiManager.shared.call(type: .showList, model: [ShowListModel].self) { (result) in
+            
             switch result {
             case .success(let dataArr):
                 self.shows = dataArr
@@ -32,8 +35,23 @@ class ShowListViewController: UIViewController {
             
         }
     }
+    
+    func filterShows(searchKey: String) {
+        ApiManager.shared.call(type: .showSearch(searchKey), model: [ShowListModel].self) { (result) in
+            switch result {
+            case .success(let dataArr):
+                self.shows = dataArr
+                self.collectionView.reloadData()
+                
+            case .failure(_):
+                break
+            }
+
+        }
+    }
 
 }
+
 extension ShowListViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return shows.count
@@ -42,7 +60,8 @@ extension ShowListViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let showDetails = shows[indexPath.row]
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: ShowListCollectionViewCell.identifier, for: indexPath) as! ShowListCollectionViewCell
-        cell.showTitleImageView.imageFromUrl(urlString: showDetails.image.medium ?? "")
+        cell.showTitleImageView.imageFromUrl(urlString: showDetails.image?.medium ?? "")
+        cell.showTitleLabel.text = showDetails.name
         return cell
     }
     
@@ -65,5 +84,13 @@ extension ShowListViewController: UICollectionViewDelegateFlowLayout {
     }
 }
 
-
+extension ShowListViewController: UISearchBarDelegate {
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.isEmpty  {
+            showList()
+        } else {
+            filterShows(searchKey: searchText)
+        }
+    }
+}
 

@@ -10,12 +10,12 @@ import Foundation
 class ShowListModel: Codable {
         
     var id: Int?
-    var image: ImageDetails
+    var image: ImageDetails?
     var language: String?
     var name: String?
     var officialSite: String?
     var premiered: String?
-    var rating: RatingDetails
+    var rating: RatingDetails?
     var runtime: Int?
 
     var status: String?

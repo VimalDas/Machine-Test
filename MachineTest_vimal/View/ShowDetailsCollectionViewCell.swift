@@ -10,5 +10,5 @@ import UIKit
 class ShowDetailsCollectionViewCell: UICollectionViewCell {
     static let identifier = String(describing: ShowDetailsCollectionViewCell.self)
     
-    @IBOutlet weak var showRatingLabel: UILabel!
+    @IBOutlet weak var showSeasonLabel: UILabel!
 }
